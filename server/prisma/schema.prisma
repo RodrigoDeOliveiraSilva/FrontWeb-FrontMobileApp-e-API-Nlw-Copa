@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model PoolBolao {
+  id          String   @id @default(cuid())
+  title       String
+  code        String   @unique
+  createdAt   DateTime @default(now())
+  ownerUserId String?
+
+  Participants Participant[]
+  owner        User?         @relation(fields: [ownerUserId], references: [id])
+}
+
+model Participant {
+  id          String @id @default(cuid())
+  userId      String
+  poolBolaoId String
+
+  GuessPalpites GuessPalpites[]
+  User          User?           @relation(fields: [userId], references: [id])
+  pollBolao     PoolBolao       @relation(fields: [poolBolaoId], references: [id])
+
+  @@unique([userId, poolBolaoId])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  googleId  String?  @unique
+  avatarUrl String?
+  createdAt DateTime @default(now())
+
+  participatingAt Participant[]
+  OwnerPoolBolao  PoolBolao[]
+}
+
+model Game {
+  id   String   @id @default(cuid())
+  date DateTime
+
+  fisrstTeamCountryCode String
+  secondTeamCountryCode String
+
+  GuessPalpites GuessPalpites[]
+}
+
+model GuessPalpites {
+  id String @id @default(cuid())
+
+  fistTeamPoints   Int
+  secondTeamPoints Int
+  createdAt        DateTime @default(now())
+  gameId           String
+  participantId    String
+
+  game        Game        @relation(fields: [gameId], references: [id])
+  participant Participant @relation(fields: [participantId], references: [id])
+
+  @@unique([participantId, gameId])
+}
